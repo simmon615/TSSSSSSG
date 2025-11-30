@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cambodia_shop_backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=vendure
+      - DB_USERNAME=vendure
+      - DB_PASSWORD=vendure
+      - SHOP_API_URL=http://localhost:3000/shop-api
+      - ADMIN_API_URL=http://localhost:3000/admin-api
+      - APP_ENV=production
+      # Add TELEGRAM_BOT_TOKEN in .env
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - app_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cambodia_shop_frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: cambodia_shop_db
+    restart: always
+    environment:
+      - POSTGRES_USER=vendure
+      - POSTGRES_PASSWORD=vendure
+      - POSTGRES_DB=vendure
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: cambodia_shop_redis
+    restart: always
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge
