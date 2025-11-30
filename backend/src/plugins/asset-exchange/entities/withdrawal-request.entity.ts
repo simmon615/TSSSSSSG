@@ -9,21 +9,22 @@ export class WithdrawalRequest extends VendureEntity {
         super(input);
     }
 
+    // 注意这里全加了 !
     @Column('int')
-    pointsDeducted: number;
+    pointsDeducted!: number;
 
     @Column({ type: 'decimal', precision: 12, scale: 2 })
-    cashAmount: number;
+    cashAmount!: number;
 
     @Column({ type: 'simple-json' })
-    paymentSnapshot: any; // Stores bank name, account number, etc. at time of request
+    paymentSnapshot!: any;
 
     @Column({ default: 'Pending' })
-    status: WithdrawalStatus;
+    status!: WithdrawalStatus;
 
     @Column({ nullable: true })
-    transactionReference: string; // For Admin to input bank ref ID
+    transactionReference!: string;
 
     @ManyToOne(type => Customer)
-    customer: Customer;
+    customer!: Customer;
 }

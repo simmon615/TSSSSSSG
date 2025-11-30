@@ -1,7 +1,5 @@
-import { VendureEntity } from '@vendure/core';
-import { DeepPartial, Column, Entity, Index } from 'typeorm';
-
-export type CommissionStatus = 'Pending' | 'Settled' | 'Cancelled';
+import { Entity, Column, ManyToOne } from 'typeorm';
+import { VendureEntity, Customer, Order, DeepPartial } from '@vendure/core';
 
 @Entity()
 export class CommissionLog extends VendureEntity {
@@ -9,20 +7,22 @@ export class CommissionLog extends VendureEntity {
         super(input);
     }
 
+    // 注意这里全加了 !
     @Column('int')
-    amount: number;
-
-    @Column()
-    @Index()
-    beneficiaryId: string; // Storing as ID string (or '0' for System)
-
-    @Column()
-    @Index()
-    sourceOrderId: string; // ID of the order that generated this commission
-
-    @Column('int')
-    level: number; // 0 = Buyer, 1 = Direct Upline, etc. -1 = System Pool
+    amount!: number;
 
     @Column({ default: 'Pending' })
-    status: CommissionStatus;
+    status!: string; 
+
+    @Column()
+    level!: number;
+
+    @ManyToOne(() => Customer)
+    beneficiary!: Customer;
+
+    @ManyToOne(() => Order)
+    sourceOrder!: Order;
+
+    @ManyToOne(() => Customer)
+    sourceUser!: Customer;
 }

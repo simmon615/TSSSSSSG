@@ -13,10 +13,6 @@ import { CommissionLog } from '../plugins/point-distribution/entities/commission
 export class PointDistributionService {
     constructor(private connection: TransactionalConnection) {}
 
-    /**
-     * Core Logic: Distribute points after order settlement
-     * Algo: 50% Recursive Decay
-     */
     async distributePointsForOrder(ctx: RequestContext, order: Order) {
         await this.connection.withTransaction(async (txCtx) => {
             
@@ -30,15 +26,21 @@ export class PointDistributionService {
 
             if (totalBasisPoints <= 0) return;
 
+            // Fix 1: 增加非空检查，解决 'order.customer' is possibly 'undefined'
+            if (!order.customer) {
+                return;
+            }
+
             const buyer = await this.connection.getEntityOrThrow(txCtx, Customer, order.customer.id) as Customer;
             
             // 2. Recursive Distribution
             let currentBeneficiary: Customer | null = buyer;
             let remainingPoints = new Decimal(totalBasisPoints);
             let level = 0;
+            const MAX_DEPTH = 50; // 防止死循环的安全阀
 
             // Stop if points < 1 or no beneficiary
-            while (currentBeneficiary && remainingPoints.greaterThanOrEqualTo(1)) {
+            while (currentBeneficiary && remainingPoints.greaterThanOrEqualTo(1) && level < MAX_DEPTH) {
                 
                 // Rule: 50% of remaining (Floor to keep Integer)
                 const allocatedPoints = remainingPoints.times(0.5).floor();
@@ -52,10 +54,12 @@ export class PointDistributionService {
                 await this.connection.getRepository(txCtx, Customer).save(currentBeneficiary);
 
                 // Log Commission
+                // Fix 2: 使用实体对象 (beneficiary) 而不是 ID (beneficiaryId)
                 await this.createCommissionLog(txCtx, {
                     amount: allocatedPoints.toNumber(),
-                    beneficiaryId: currentBeneficiary.id.toString(),
-                    sourceOrderId: order.id.toString(),
+                    beneficiary: currentBeneficiary, // 传对象
+                    sourceOrder: order,              // 传对象
+                    sourceUser: buyer,               // 传对象
                     level: level,
                     status: 'Pending'
                 });
@@ -77,18 +81,14 @@ export class PointDistributionService {
 
             // 3. Pool remaining points to System Account (ID: 0)
             if (remainingPoints.greaterThan(0)) {
-                // Ensure ID 0 handling logic is consistent with SystemAccountInitService
-                // Note: We don't necessarily need to load the System Customer entity to log it, just the ID.
                 await this.createCommissionLog(txCtx, {
                     amount: remainingPoints.toNumber(),
-                    beneficiaryId: '0', 
-                    sourceOrderId: order.id.toString(),
+                    beneficiary: { id: 0 } as any, // Fix 3: 构造一个 ID 为 0 的对象存入关联
+                    sourceOrder: order,
+                    sourceUser: buyer,
                     level: -1,
                     status: 'Settled'
                 });
-                
-                // Optional: Actually increment System Account Point Balance if required for auditing
-                // await this.incrementSystemBalance(txCtx, remainingPoints.toNumber());
             }
         });
     }

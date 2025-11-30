@@ -1,10 +1,19 @@
-import { CustomFields } from '@vendure/core';
+import { CustomFields, Customer, LanguageCode } from '@vendure/core';
 
 export const customFields: CustomFields = {
     Customer: [
         {
             name: 'telegramId',
             type: 'string',
+            unique: true,
+            public: false,
+            nullable: true,
+            ui: { tab: 'Telegram' },
+        },
+        {
+            name: 'referrer',
+            type: 'relation',
+            entity: Customer,
             public: false,
             nullable: true,
             ui: { tab: 'Telegram' },
@@ -15,28 +24,15 @@ export const customFields: CustomFields = {
             defaultValue: 0,
             public: true,
             ui: { tab: 'Assets', component: 'number-form-input' },
+            label: [{ languageCode: LanguageCode.en, value: 'Point Balance' }],
         },
         {
             name: 'shoppingBalance',
-            type: 'float', // Note: Stored as float, handled as Decimal in logic
-            defaultValue: 0.00,
-            public: true,
-            ui: { tab: 'Assets', component: 'currency-form-input' },
-        },
-        {
-            name: 'mainBalance',
             type: 'float',
             defaultValue: 0.00,
             public: true,
             ui: { tab: 'Assets', component: 'currency-form-input' },
-        },
-        {
-            name: 'referrer',
-            type: 'relation',
-            entity: 'Customer',
-            public: false,
-            nullable: true,
-            ui: { tab: 'Telegram' },
+            label: [{ languageCode: LanguageCode.en, value: 'Shopping Balance' }],
         },
         {
             name: 'paymentInfo',
@@ -52,21 +48,24 @@ export const customFields: CustomFields = {
             type: 'int',
             defaultValue: 0,
             public: true,
-            label: [{ languageCode: 'en', value: 'Reward Points' }],
+            label: [{ languageCode: LanguageCode.en, value: 'Reward Points' }],
         },
     ],
-    OrderAddress: [
+    // 修改处：将 OrderAddress 改为 Order，并重命名字段以防冲突
+    Order: [
         {
-            name: 'lat',
+            name: 'shippingLat',
             type: 'float',
             public: true,
             nullable: true,
+            label: [{ languageCode: LanguageCode.en, value: 'Shipping Latitude' }],
         },
         {
-            name: 'lng',
+            name: 'shippingLng',
             type: 'float',
             public: true,
             nullable: true,
+            label: [{ languageCode: LanguageCode.en, value: 'Shipping Longitude' }],
         }
     ]
 };

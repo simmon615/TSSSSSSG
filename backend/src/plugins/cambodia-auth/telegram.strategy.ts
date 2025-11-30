@@ -1,4 +1,5 @@
-import { AuthenticationStrategy, User, ExternalAuthenticationService, Injector, RequestContext, Logger, Injectable } from '@vendure/core';
+import { AuthenticationStrategy, User, ExternalAuthenticationService, Injector, RequestContext, Logger } from '@vendure/core';
+import { Injectable } from '@nestjs/common';
 import { DocumentNode } from 'graphql';
 import gql from 'graphql-tag';
 import * as crypto from 'crypto';
@@ -10,7 +11,8 @@ export type TelegramAuthData = {
 @Injectable()
 export class TelegramAuthStrategy implements AuthenticationStrategy<TelegramAuthData> {
     readonly name = 'telegram';
-    private externalAuthenticationService: ExternalAuthenticationService;
+    // 添加 ! 断言，修复 TS 未初始化报错
+    private externalAuthenticationService!: ExternalAuthenticationService;
 
     init(injector: Injector) {
         this.externalAuthenticationService = injector.get(ExternalAuthenticationService);

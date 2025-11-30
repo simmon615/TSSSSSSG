@@ -9,21 +9,22 @@ export class TopUpRequest extends VendureEntity {
         super(input);
     }
 
+    // 注意这里加了 !
     @Column({ type: 'decimal', precision: 12, scale: 2 })
-    amount: number;
+    amount!: number;
 
     @Column()
-    proofImage: string; // URL or Base64
+    proofImage!: string;
 
     @Column({ default: 'Pending' })
-    status: TopUpStatus;
+    status!: TopUpStatus;
 
     @Column({ nullable: true })
-    rejectionReason: string;
+    rejectionReason!: string;
 
     @Column({ nullable: true })
-    approvedAt: Date;
+    approvedAt!: Date;
 
     @ManyToOne(type => Customer)
-    customer: Customer;
+    customer!: Customer;
 }
